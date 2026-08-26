@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unvoiced Thoughts — Write</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,450;0,9..144,600;1,9..144,450&family=Dancing+Script:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --paper: #EDEAE4; --paper-alt: #E3DED2; --ink: #211F1C; --ink-soft: #55503f; --ink-faint: #8a8474;
+    --pine: #33513C; --pine-dark: #24392b; --brass: #B8925A; --brass-dark: #93744a; --rule: #cdc5b3; --danger:#9c4a3c;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: var(--paper);
+    background-image: radial-gradient(circle at 1px 1px, rgba(33,31,28,0.06) 1px, transparent 0);
+    background-size: 22px 22px;
+    color: var(--ink); font-family:'Inter', sans-serif; min-height:100vh;
+  }
+  .app{ max-width: 920px; margin:0 auto; padding: 28px 20px 80px; }
+  button{ font-family:'Inter', sans-serif; cursor:pointer; border:none; }
+  .btn{ background: var(--pine); color:#F3F1E9; padding:10px 18px; border-radius:3px; font-size:14px; font-weight:500; }
+  .btn:hover{ background: var(--pine-dark); }
+  .btn-ghost{ background:transparent; color:var(--ink-soft); padding:9px 14px; border:1px solid var(--rule); border-radius:3px; font-size:13px; }
+  .btn-ghost:hover{ border-color: var(--ink-soft); color:var(--ink); }
+  .btn-danger{ background:transparent; color: var(--danger); padding:9px 14px; border:1px solid transparent; border-radius:3px; font-size:13px;}
+  .btn-danger:hover{ background: rgba(156,74,60,0.1); border-color: rgba(156,74,60,0.3);}
+  .btn-brass{ background: var(--brass); color:#2b2213; }
+  .btn-brass:hover{ background: var(--brass-dark); }
+
+  /* Login */
+  #view-login{ max-width:360px; margin: 90px auto; text-align:center; }
+  #view-login h1{ font-family:'Dancing Script', cursive; font-size:40px; margin:0 0 30px; }
+  #view-login input{
+    width:100%; padding:11px 13px; margin-bottom:10px; border:1px solid var(--rule); border-radius:3px;
+    background: var(--paper-alt); font-family:'Inter'; font-size:14px; outline:none; color:var(--ink);
+  }
+  #view-login input:focus{ border-color: var(--pine); }
+  #view-login .btn{ width:100%; margin-top:6px; }
+  #login-error{ font-family:'JetBrains Mono',monospace; font-size:12px; color: var(--danger); margin-top:12px; min-height:16px; }
+  .back-to-site{ display:block; margin-top:24px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-faint); text-decoration:none; }
+
+  /* Header */
+  .brand-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom: 30px; gap:12px; flex-wrap:wrap;}
+  .brand h1{ font-family:'Dancing Script', cursive; font-weight:700; font-size:34px; margin:0; }
+  .header-actions{ display:flex; gap:8px; align-items:center; }
+
+  .toolbar-row{ display:flex; gap:10px; align-items:center; margin-bottom:22px; flex-wrap:wrap; }
+  .search-wrap{ position:relative; flex:1; min-width:180px; }
+  .search-wrap input{ width:100%; padding:10px 12px 10px 34px; border:1px solid var(--rule); border-radius:3px; background: var(--paper-alt); font-family:'Inter'; font-size:14px; color:var(--ink); outline:none; }
+  .search-wrap input:focus{ border-color: var(--pine); }
+  .search-wrap svg{ position:absolute; left:11px; top:50%; transform:translateY(-50%); opacity:0.5; }
+  .filter-pills{ display:flex; gap:6px; }
+  .pill{ font-family:'JetBrains Mono', monospace; font-size:11px; padding:7px 11px; border-radius:20px; border:1px solid var(--rule); background:transparent; color:var(--ink-soft); }
+  .pill.active{ background: var(--ink); color:var(--paper); border-color:var(--ink); }
+
+  .empty{ text-align:center; padding: 70px 20px; color: var(--ink-faint); }
+  .empty h3{ font-family:'Fraunces', serif; font-weight:450; font-size:20px; color:var(--ink-soft); margin: 0 0 6px; }
+
+  .card{ display:block; width:100%; text-align:left; background: var(--paper-alt); border:1px solid var(--rule); border-radius:4px; padding:18px 20px; margin-bottom:12px; }
+  .card:hover{ border-color: var(--ink-soft); }
+  .card-top{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .card-date{ font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink-faint); }
+  .status-dot{ font-family:'JetBrains Mono', monospace; font-size:10.5px; padding:2px 8px; border-radius:20px; }
+  .status-dot.draft{ background: rgba(184,146,90,0.16); color:var(--brass-dark); }
+  .status-dot.published{ background: rgba(51,81,60,0.14); color: var(--pine); }
+  .card h3{ font-family:'Fraunces', serif; font-weight:600; font-size:21px; margin: 0 0 6px; }
+  .card p{ font-size:13.5px; color: var(--ink-soft); margin:0 0 8px; line-height:1.5; }
+  .card-meta{ display:flex; gap:14px; align-items:center; }
+  .card-meta span{ font-family:'JetBrains Mono', monospace; font-size:11px; color: var(--ink-faint); }
+  .tag-chip{ font-family:'JetBrains Mono', monospace; font-size:10.5px; background: rgba(33,31,28,0.06); padding:2px 8px; border-radius:20px; color: var(--ink-soft); }
+  #loading{ text-align:center; padding:60px; color:var(--ink-faint); font-family:'JetBrains Mono',monospace; font-size:12px; }
+
+  /* Editor */
+  #view-editor{ display:none; }
+  .editor-top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:22px; gap:10px; flex-wrap:wrap; }
+  .editor-actions{ display:flex; gap:8px; align-items:center; }
+  .save-status{ font-family:'JetBrains Mono', monospace; font-size:11px; color: var(--ink-faint); margin-right:6px;}
+  .editor-shell{ display:flex; gap:26px; align-items:flex-start; }
+  .editor-main{ flex:1; min-width:0; }
+  .title-input{ width:100%; font-family:'Fraunces', serif; font-weight:600; font-size:36px; border:none; background:transparent; outline:none; color:var(--ink); padding:0; margin-bottom:10px; }
+  .tags-input{ width:100%; font-family:'JetBrains Mono', monospace; font-size:12.5px; border:none; background:transparent; outline:none; color: var(--ink-soft); padding:0 0 16px; border-bottom:1px solid var(--rule); margin-bottom:18px; }
+  .tabs{ display:flex; gap:2px; margin-bottom:12px; }
+  .tab{ font-size:12.5px; padding:7px 14px; background:transparent; color:var(--ink-faint); border-bottom:2px solid transparent; }
+  .tab.active{ color: var(--ink); border-bottom-color: var(--pine); font-weight:500; }
+  textarea#body-input{ width:100%; min-height: 380px; font-family:'Inter', sans-serif; font-size:16.5px; line-height:1.75; color: var(--ink); border:none; background:transparent; outline:none; resize:none; padding:0; }
+  #preview{ display:none; font-size:16.5px; line-height:1.8; }
+  #preview h1,#preview h2{ font-family:'Fraunces', serif; font-weight:600; }
+  #preview blockquote{ margin: 0 0 16px; padding-left:14px; border-left:2px solid var(--brass); color: var(--ink-soft); font-style:italic; }
+  #preview p{ margin: 0 0 16px; } #preview ul{ margin:0 0 16px; padding-left:20px; }
+
+  .ink-meter{ width:64px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:10px; position:sticky; top:24px; }
+  .tube{ width:14px; height:220px; border-radius:8px; background: var(--paper-alt); border:1px solid var(--rule); overflow:hidden; display:flex; align-items:flex-end; }
+  .tube-fill{ width:100%; background: linear-gradient(180deg, #4a7357, var(--pine-dark)); border-radius:0 0 7px 7px; transition: height .4s ease; height:0%; }
+  .ink-count{ font-family:'JetBrains Mono', monospace; font-size:11px; color: var(--ink-faint); text-align:center; }
+  .ink-count b{ display:block; font-size:15px; color: var(--ink); font-weight:500; }
+
+  /* Comment moderation */
+  .mod-section{ border-top:1px solid var(--rule); margin-top:36px; padding-top:22px; }
+  .mod-section h4{ font-family:'Fraunces', serif; font-weight:600; font-size:17px; margin:0 0 14px; }
+  .mod-comment{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; padding:12px 0; border-bottom:1px solid var(--rule); }
+  .mod-comment-body{ font-size:13.5px; }
+  .mod-comment-name{ font-weight:600; margin-right:6px; }
+  .mod-comment-date{ font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--ink-faint); }
+  .mod-comment-text{ color:var(--ink-soft); margin-top:3px; }
+
+  @media (max-width: 720px){ .editor-shell{ flex-direction:column-reverse; } .ink-meter{ flex-direction:row; width:100%; position:static; justify-content:center; } .tube{ width: 60%; height:12px; } .tube-fill{ height:100% !important; width:0%; } }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div id="view-login">
+    <h1>Unvoiced Thoughts</h1>
+    <input id="login-email" type="email" placeholder="Email" autocomplete="username">
+    <input id="login-password" type="password" placeholder="Password" autocomplete="current-password">
+    <button class="btn" onclick="login()">Log in</button>
+    <div id="login-error"></div>
+    <a class="back-to-site" href="index.html">← back to the site</a>
+  </div>
+
+  <div id="view-library" style="display:none;">
+    <div class="brand-row">
+      <h1>Unvoiced Thoughts</h1>
+      <div class="header-actions">
+        <a class="btn-ghost" href="index.html" style="text-decoration:none; display:inline-block;">View site</a>
+        <button class="btn-ghost" onclick="logout()">Log out</button>
+        <button class="btn btn-brass" onclick="newPost()">+ New entry</button>
+      </div>
+    </div>
+    <div class="toolbar-row">
+      <div class="search-wrap">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="search" type="text" placeholder="Search entries…" oninput="renderLibrary()">
+      </div>
+      <div class="filter-pills">
+        <button class="pill active" data-f="all" onclick="setFilter('all')">All</button>
+        <button class="pill" data-f="draft" onclick="setFilter('draft')">Drafts</button>
+        <button class="pill" data-f="published" onclick="setFilter('published')">Published</button>
+      </div>
+    </div>
+    <div id="loading" style="display:none;">loading entries…</div>
+    <div id="library-list"></div>
+  </div>
+
+  <div id="view-editor">
+    <div class="editor-top">
+      <button class="btn-ghost" onclick="backToLibrary()">← Library</button>
+      <div class="editor-actions">
+        <span class="save-status" id="save-status"></span>
+        <button class="btn-danger" onclick="deletePost()">Delete</button>
+        <button class="btn-ghost" id="publish-toggle" onclick="togglePublish()">Publish</button>
+      </div>
+    </div>
+    <div class="editor-shell">
+      <div class="editor-main">
+        <input id="title-input" class="title-input" placeholder="Untitled entry" oninput="scheduleSave()">
+        <input id="tags-input" class="tags-input" placeholder="tags, separated, by comma" oninput="scheduleSave()">
+        <div class="tabs">
+          <button class="tab active" id="tab-write" onclick="setTab('write')">Write</button>
+          <button class="tab" id="tab-preview" onclick="setTab('preview')">Preview</button>
+        </div>
+        <textarea id="body-input" placeholder="Begin here. Markdown-ish: **bold**, *italic*, # heading, > quote, - list item" oninput="onBodyInput()"></textarea>
+        <div id="preview"></div>
+
+        <div class="mod-section">
+          <h4 id="mod-heading">Comments</h4>
+          <div id="mod-list"></div>
+        </div>
+      </div>
+      <div class="ink-meter">
+        <div class="tube"><div class="tube-fill" id="tube-fill"></div></div>
+        <div class="ink-count"><b id="word-count">0</b>words</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ---- Configure your Supabase project here ----
+const SUPABASE_URL = 'https://klzhiyulvccgxmtqmsel.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtsemhpeXVsdmNjZ3htdHFtc2VsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3NDcyMjAsImV4cCI6MjEwMzMyMzIyMH0.U2SBI-1pTEH-rr0htaZ9jX36hWENtvC5UPwL8Kcy_OQ';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let posts = [];
+let currentId = null;
+let currentFilter = 'all';
+let saveTimer = null;
+let currentUser = null;
+
+async function init(){
+  const { data: { session } } = await sb.auth.getSession();
+  if(session){ currentUser = session.user; showLibrary(); }
+  else { showLogin(); }
+}
+
+function showLogin(){
+  document.getElementById('view-login').style.display = 'block';
+  document.getElementById('view-library').style.display = 'none';
+  document.getElementById('view-editor').style.display = 'none';
+}
+
+async function login(){
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = '';
+  if(!email || !password){ errEl.textContent = 'enter your email and password'; return; }
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if(error){ errEl.textContent = error.message; return; }
+  currentUser = data.user;
+  showLibrary();
+}
+
+async function logout(){
+  await sb.auth.signOut();
+  currentUser = null;
+  showLogin();
+}
+
+function showLibrary(){
+  document.getElementById('view-login').style.display = 'none';
+  document.getElementById('view-library').style.display = 'block';
+  document.getElementById('view-editor').style.display = 'none';
+  loadPosts();
+}
+
+async function loadPosts(){
+  document.getElementById('loading').style.display = 'block';
+  const { data, error } = await supabase
+    .from('posts')
+    .select('*')
+    .eq('author_id', currentUser.id)
+    .order('updated_at', { ascending: false });
+  document.getElementById('loading').style.display = 'none';
+  if(error){ console.error(error); posts = []; }
+  else { posts = data || []; }
+  renderLibrary();
+}
+
+function setFilter(f){
+  currentFilter = f;
+  document.querySelectorAll('.pill').forEach(p=>p.classList.toggle('active', p.dataset.f===f));
+  renderLibrary();
+}
+
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function fmtDate(ts){
+  return new Date(ts).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}).toUpperCase();
+}
+function wordCount(text){ const t=(text||'').trim(); return t? t.split(/\s+/).length : 0; }
+
+function renderLibrary(){
+  const q = (document.getElementById('search').value || '').toLowerCase();
+  let filtered = posts.filter(p=>{
+    if(currentFilter !== 'all' && p.status !== currentFilter) return false;
+    if(!q) return true;
+    return (p.title||'').toLowerCase().includes(q) || (p.body||'').toLowerCase().includes(q) || (p.tags||'').toLowerCase().includes(q);
+  });
+  const listEl = document.getElementById('library-list');
+  if(filtered.length === 0){
+    listEl.innerHTML = `<div class="empty"><h3>${posts.length===0 ? 'The page is blank' : 'Nothing matches'}</h3><p>${posts.length===0 ? 'Start your first entry.' : 'Try a different search or filter.'}</p></div>`;
+    return;
+  }
+  listEl.innerHTML = filtered.map(p=>{
+    const excerpt = escapeHtml((p.body||'').slice(0,160)).trim() + ((p.body||'').length>160 ? '…' : '');
+    const tags = (p.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
+    return `<button class="card" onclick="openPost('${p.id}')" style="cursor:pointer;">
+      <div class="card-top">
+        <span class="card-date">${fmtDate(p.updated_at)}</span>
+        <span class="status-dot ${p.status}">${p.status === 'published' ? '● published' : '○ draft'}</span>
+      </div>
+      <h3>${escapeHtml(p.title) || 'Untitled entry'}</h3>
+      <p>${excerpt || 'No content yet.'}</p>
+      <div class="card-meta"><span>${wordCount(p.body)} words</span>${tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join('')}</div>
+    </button>`;
+  }).join('');
+}
+
+async function newPost(){
+  const now = new Date().toISOString();
+  const { data, error } = await sb.from('posts').insert({
+    title: '', body: '', tags: '', status: 'draft'
+  }).select().single();
+  if(error){ console.error(error); alert('Could not create entry: ' + error.message); return; }
+  posts.unshift(data);
+  openPost(data.id);
+}
+
+function openPost(id){
+  currentId = id;
+  const p = posts.find(x=>x.id===id);
+  if(!p) return;
+  document.getElementById('title-input').value = p.title || '';
+  document.getElementById('tags-input').value = p.tags || '';
+  document.getElementById('body-input').value = p.body || '';
+  updatePublishButton(p.status);
+  updateWordCount();
+  setTab('write');
+  document.getElementById('save-status').textContent = '';
+  document.getElementById('view-library').style.display = 'none';
+  document.getElementById('view-editor').style.display = 'block';
+  window.scrollTo(0,0);
+  loadModerationComments(id);
+  setTimeout(()=>document.getElementById('title-input').focus(), 50);
+}
+
+function backToLibrary(){
+  document.getElementById('view-editor').style.display = 'none';
+  document.getElementById('view-library').style.display = 'block';
+  currentId = null;
+  renderLibrary();
+}
+
+function updatePublishButton(status){
+  document.getElementById('publish-toggle').textContent = status === 'published' ? 'Unpublish' : 'Publish';
+}
+function onBodyInput(){ updateWordCount(); scheduleSave(); }
+function updateWordCount(){
+  const wc = wordCount(document.getElementById('body-input').value);
+  document.getElementById('word-count').textContent = wc;
+  document.getElementById('tube-fill').style.height = Math.min(100, Math.round((wc/800)*100)) + '%';
+}
+
+function setTab(which){
+  document.getElementById('tab-write').classList.toggle('active', which==='write');
+  document.getElementById('tab-preview').classList.toggle('active', which==='preview');
+  document.getElementById('body-input').style.display = which==='write' ? 'block' : 'none';
+  document.getElementById('preview').style.display = which==='preview' ? 'block' : 'none';
+  if(which==='preview') renderPreview();
+}
+
+function inlineMd(s){ s=escapeHtml(s); s=s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>'); s=s.replace(/\*(.+?)\*/g,'<em>$1</em>'); return s; }
+function renderPreview(){
+  const raw = document.getElementById('body-input').value;
+  const lines = raw.split('\n'); let html=''; let inList=false;
+  for(let line of lines){
+    let l = line.trim();
+    if(l.startsWith('## ')){ if(inList){html+='</ul>';inList=false;} html += `<h2>${inlineMd(l.slice(3))}</h2>`; }
+    else if(l.startsWith('# ')){ if(inList){html+='</ul>';inList=false;} html += `<h1>${inlineMd(l.slice(2))}</h1>`; }
+    else if(l.startsWith('> ')){ if(inList){html+='</ul>';inList=false;} html += `<blockquote>${inlineMd(l.slice(2))}</blockquote>`; }
+    else if(l.startsWith('- ')){ if(!inList){html+='<ul>';inList=true;} html += `<li>${inlineMd(l.slice(2))}</li>`; }
+    else if(l === ''){ if(inList){html+='</ul>';inList=false;} }
+    else { if(inList){html+='</ul>';inList=false;} html += `<p>${inlineMd(l)}</p>`; }
+  }
+  if(inList) html += '</ul>';
+  document.getElementById('preview').innerHTML = html || '<p style="color:var(--ink-faint)">Nothing to preview yet.</p>';
+}
+
+function scheduleSave(){
+  document.getElementById('save-status').textContent = 'saving…';
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(savePost, 600);
+}
+
+async function savePost(){
+  if(!currentId) return;
+  const p = posts.find(x=>x.id===currentId);
+  if(!p) return;
+  p.title = document.getElementById('title-input').value;
+  p.tags = document.getElementById('tags-input').value;
+  p.body = document.getElementById('body-input').value;
+  const { error } = await sb.from('posts').update({
+    title: p.title, tags: p.tags, body: p.body, updated_at: new Date().toISOString()
+  }).eq('id', p.id);
+  document.getElementById('save-status').textContent = error ? 'save failed' : ('saved · ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}));
+}
+
+async function togglePublish(){
+  const p = posts.find(x=>x.id===currentId);
+  if(!p) return;
+  const newStatus = p.status === 'published' ? 'draft' : 'published';
+  const { error } = await sb.from('posts').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', p.id);
+  if(error){ alert('Could not update: ' + error.message); return; }
+  p.status = newStatus;
+  updatePublishButton(newStatus);
+}
+
+async function deletePost(){
+  if(!currentId) return;
+  if(!confirm('Delete this entry? This cannot be undone.')) return;
+  const { error } = await sb.from('posts').delete().eq('id', currentId);
+  if(error){ alert('Could not delete: ' + error.message); return; }
+  posts = posts.filter(x=>x.id!==currentId);
+  backToLibrary();
+}
+
+async function loadModerationComments(postId){
+  const listEl = document.getElementById('mod-list');
+  listEl.innerHTML = '<div class="save-status">loading comments…</div>';
+  const { data, error } = await sb.from('comments').select('*').eq('post_id', postId).order('created_at', { ascending: true });
+  if(error){ listEl.innerHTML = '<div class="save-status">could not load comments</div>'; return; }
+  document.getElementById('mod-heading').textContent = `Comments (${data.length})`;
+  if(data.length === 0){ listEl.innerHTML = '<div class="save-status">No comments yet.</div>'; return; }
+  listEl.innerHTML = data.map(c => `
+    <div class="mod-comment">
+      <div class="mod-comment-body">
+        <span class="mod-comment-name">${escapeHtml(c.name || 'Anonymous')}</span>
+        <span class="mod-comment-date">${fmtDate(c.created_at)}</span>
+        <div class="mod-comment-text">${escapeHtml(c.body)}</div>
+      </div>
+      <button class="btn-danger" onclick="deleteComment('${c.id}', '${postId}')">Remove</button>
+    </div>`).join('');
+}
+
+async function deleteComment(commentId, postId){
+  if(!confirm('Remove this comment?')) return;
+  const { error } = await sb.from('comments').delete().eq('id', commentId);
+  if(error){ alert('Could not remove comment: ' + error.message); return; }
+  loadModerationComments(postId);
+}
+
+init();
+</script>
+</body>
+</html>
