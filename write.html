@@ -184,7 +184,7 @@
 // ---- Configure your Supabase project here ----
 const SUPABASE_URL = 'https://klzhiyulvccgxmtqmsel.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtsemhpeXVsdmNjZ3htdHFtc2VsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3NDcyMjAsImV4cCI6MjEwMzMyMzIyMH0.U2SBI-1pTEH-rr0htaZ9jX36hWENtvC5UPwL8Kcy_OQ';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let posts = [];
 let currentId = null;
@@ -193,7 +193,7 @@ let saveTimer = null;
 let currentUser = null;
 
 async function init(){
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await sb.auth.getSession();
   if(session){ currentUser = session.user; showLibrary(); }
   else { showLogin(); }
 }
@@ -210,14 +210,14 @@ async function login(){
   const errEl = document.getElementById('login-error');
   errEl.textContent = '';
   if(!email || !password){ errEl.textContent = 'enter your email and password'; return; }
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
   if(error){ errEl.textContent = error.message; return; }
   currentUser = data.user;
   showLibrary();
 }
 
 async function logout(){
-  await supabase.auth.signOut();
+  await sb.auth.signOut();
   currentUser = null;
   showLogin();
 }
@@ -285,7 +285,7 @@ function renderLibrary(){
 
 async function newPost(){
   const now = new Date().toISOString();
-  const { data, error } = await supabase.from('posts').insert({
+  const { data, error } = await sb.from('posts').insert({
     title: '', body: '', tags: '', status: 'draft'
   }).select().single();
   if(error){ console.error(error); alert('Could not create entry: ' + error.message); return; }
@@ -366,7 +366,7 @@ async function savePost(){
   p.title = document.getElementById('title-input').value;
   p.tags = document.getElementById('tags-input').value;
   p.body = document.getElementById('body-input').value;
-  const { error } = await supabase.from('posts').update({
+  const { error } = await sb.from('posts').update({
     title: p.title, tags: p.tags, body: p.body, updated_at: new Date().toISOString()
   }).eq('id', p.id);
   document.getElementById('save-status').textContent = error ? 'save failed' : ('saved · ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}));
@@ -376,7 +376,7 @@ async function togglePublish(){
   const p = posts.find(x=>x.id===currentId);
   if(!p) return;
   const newStatus = p.status === 'published' ? 'draft' : 'published';
-  const { error } = await supabase.from('posts').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', p.id);
+  const { error } = await sb.from('posts').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', p.id);
   if(error){ alert('Could not update: ' + error.message); return; }
   p.status = newStatus;
   updatePublishButton(newStatus);
@@ -385,7 +385,7 @@ async function togglePublish(){
 async function deletePost(){
   if(!currentId) return;
   if(!confirm('Delete this entry? This cannot be undone.')) return;
-  const { error } = await supabase.from('posts').delete().eq('id', currentId);
+  const { error } = await sb.from('posts').delete().eq('id', currentId);
   if(error){ alert('Could not delete: ' + error.message); return; }
   posts = posts.filter(x=>x.id!==currentId);
   backToLibrary();
@@ -394,7 +394,7 @@ async function deletePost(){
 async function loadModerationComments(postId){
   const listEl = document.getElementById('mod-list');
   listEl.innerHTML = '<div class="save-status">loading comments…</div>';
-  const { data, error } = await supabase.from('comments').select('*').eq('post_id', postId).order('created_at', { ascending: true });
+  const { data, error } = await sb.from('comments').select('*').eq('post_id', postId).order('created_at', { ascending: true });
   if(error){ listEl.innerHTML = '<div class="save-status">could not load comments</div>'; return; }
   document.getElementById('mod-heading').textContent = `Comments (${data.length})`;
   if(data.length === 0){ listEl.innerHTML = '<div class="save-status">No comments yet.</div>'; return; }
@@ -411,7 +411,7 @@ async function loadModerationComments(postId){
 
 async function deleteComment(commentId, postId){
   if(!confirm('Remove this comment?')) return;
-  const { error } = await supabase.from('comments').delete().eq('id', commentId);
+  const { error } = await sb.from('comments').delete().eq('id', commentId);
   if(error){ alert('Could not remove comment: ' + error.message); return; }
   loadModerationComments(postId);
 }

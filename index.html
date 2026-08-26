@@ -122,7 +122,7 @@
 // ---- Configure your Supabase project here ----
 const SUPABASE_URL = 'https://klzhiyulvccgxmtqmsel.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtsemhpeXVsdmNjZ3htdHFtc2VsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3NDcyMjAsImV4cCI6MjEwMzMyMzIyMH0.U2SBI-1pTEH-rr0htaZ9jX36hWENtvC5UPwL8Kcy_OQ';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let posts = [];
 let currentPost = null;
@@ -242,7 +242,7 @@ async function submitComment(){
   const btn = document.getElementById('comment-submit');
   btn.disabled = true;
   statusEl.textContent = 'posting…';
-  const { error } = await supabase.from('comments').insert({ post_id: currentPost.id, name, body });
+  const { error } = await sb.from('comments').insert({ post_id: currentPost.id, name, body });
   btn.disabled = false;
   if(error){ console.error(error); statusEl.textContent = 'could not post — try again'; return; }
   document.getElementById('comment-body').value = '';
