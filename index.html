@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unvoiced Thoughts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,450;0,9..144,600;1,9..144,450&family=Dancing+Script:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --paper: #EDEAE4; --paper-alt: #E3DED2; --ink: #211F1C; --ink-soft: #55503f; --ink-faint: #8a8474;
+    --pine: #33513C; --pine-dark: #24392b; --brass: #B8925A; --brass-dark: #93744a; --rule: #cdc5b3; --danger:#9c4a3c;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: var(--paper);
+    background-image: radial-gradient(circle at 1px 1px, rgba(33,31,28,0.06) 1px, transparent 0);
+    background-size: 22px 22px;
+    color: var(--ink); font-family:'Inter', sans-serif; min-height:100vh;
+  }
+  .app{ max-width: 760px; margin:0 auto; padding: 28px 20px 90px; }
+  .brand-row{ position:relative; text-align:center; margin-bottom: 30px; }
+  .brand h1{ font-family:'Dancing Script', cursive; font-weight:700; font-size:44px; margin:0; }
+  .write-link{ position:absolute; right:0; top:8px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-faint); text-decoration:none; letter-spacing:0.03em; }
+  .write-link:hover{ color: var(--ink); }
+
+  .search-wrap{ position:relative; margin-bottom:24px; }
+  .search-wrap input{
+    width:100%; padding:10px 12px 10px 34px; border:1px solid var(--rule); border-radius:3px; background: var(--paper-alt);
+    font-family:'Inter'; font-size:14px; color:var(--ink); outline:none;
+  }
+  .search-wrap input:focus{ border-color: var(--pine); }
+  .search-wrap svg{ position:absolute; left:11px; top:50%; transform:translateY(-50%); opacity:0.5; }
+
+  .card{
+    display:block; width:100%; text-align:left; background: var(--paper-alt); border:1px solid var(--rule); border-radius:4px;
+    padding:18px 20px; margin-bottom:12px; cursor:pointer;
+  }
+  .card:hover{ border-color: var(--ink-soft); }
+  .card-date{ font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink-faint); }
+  .card h3{ font-family:'Fraunces', serif; font-weight:600; font-size:21px; margin: 6px 0; }
+  .card p{ font-size:13.5px; color: var(--ink-soft); margin:0 0 8px; line-height:1.5; }
+  .tag-chip{ font-family:'JetBrains Mono', monospace; font-size:10.5px; background: rgba(33,31,28,0.06); padding:2px 8px; border-radius:20px; color: var(--ink-soft); margin-right:6px;}
+
+  .empty{ text-align:center; padding: 70px 20px; color: var(--ink-faint); }
+  .empty h3{ font-family:'Fraunces', serif; font-weight:450; font-size:20px; color:var(--ink-soft); margin: 0 0 6px; }
+
+  /* Post detail */
+  #view-post{ display:none; }
+  .back-link{ font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--ink-soft); background:none; border:none; cursor:pointer; padding:0; margin-bottom:22px; }
+  .back-link:hover{ color:var(--ink); }
+  #post-date{ font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink-faint); }
+  #post-title{ font-family:'Fraunces', serif; font-weight:600; font-size:34px; margin: 8px 0 6px; }
+  #post-tags{ margin-bottom:24px; }
+  #post-body{ font-size:16.5px; line-height:1.8; margin-bottom:40px; }
+  #post-body h1,#post-body h2{ font-family:'Fraunces', serif; font-weight:600; }
+  #post-body blockquote{ margin:0 0 16px; padding-left:14px; border-left:2px solid var(--brass); color:var(--ink-soft); font-style:italic; }
+  #post-body p{ margin:0 0 16px; }
+  #post-body ul{ margin:0 0 16px; padding-left:20px; }
+
+  .comments-section{ border-top:1px solid var(--rule); padding-top:26px; }
+  .comments-section h4{ font-family:'Fraunces', serif; font-weight:600; font-size:18px; margin:0 0 16px; }
+  .comment{ padding:14px 0; border-bottom:1px solid var(--rule); }
+  .comment-name{ font-weight:600; font-size:13.5px; }
+  .comment-date{ font-family:'JetBrains Mono', monospace; font-size:10.5px; color:var(--ink-faint); margin-left:8px;}
+  .comment-body{ font-size:14px; color:var(--ink-soft); margin-top:4px; line-height:1.55; }
+  .comment-form{ margin-top:20px; display:flex; flex-direction:column; gap:10px; }
+  .comment-form input, .comment-form textarea{
+    font-family:'Inter'; font-size:14px; padding:10px 12px; border:1px solid var(--rule); border-radius:3px; background: var(--paper-alt); outline:none; color:var(--ink);
+  }
+  .comment-form input:focus, .comment-form textarea:focus{ border-color: var(--pine); }
+  .comment-form textarea{ min-height:80px; resize:vertical; font-family:'Inter'; }
+  .comment-form button{
+    align-self:flex-start; background: var(--pine); color:#F3F1E9; padding:10px 18px; border:none; border-radius:3px; font-size:13.5px; cursor:pointer;
+  }
+  .comment-form button:hover{ background: var(--pine-dark); }
+  .comment-form button:disabled{ opacity:0.6; cursor:default; }
+  .form-note{ font-family:'JetBrains Mono', monospace; font-size:11px; color: var(--ink-faint); }
+  #loading{ text-align:center; padding:60px; color:var(--ink-faint); font-family:'JetBrains Mono',monospace; font-size:12px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div id="view-library">
+    <div class="brand-row">
+      <div class="brand"><h1>Unvoiced Thoughts</h1></div>
+      <a class="write-link" href="write.html">write →</a>
+    </div>
+    <div class="search-wrap">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="search" type="text" placeholder="Search entries…" oninput="renderLibrary()">
+    </div>
+    <div id="loading">loading entries…</div>
+    <div id="library-list"></div>
+  </div>
+
+  <div id="view-post">
+    <button class="back-link" onclick="backToLibrary()">← All entries</button>
+    <div id="post-date"></div>
+    <div id="post-title"></div>
+    <div id="post-tags"></div>
+    <div id="post-body"></div>
+
+    <div class="comments-section">
+      <h4 id="comment-count">Comments</h4>
+      <div id="comments-list"></div>
+      <div class="comment-form">
+        <input id="comment-name" type="text" placeholder="Your name" maxlength="80">
+        <textarea id="comment-body" placeholder="Add a thought…" maxlength="2000"></textarea>
+        <button id="comment-submit" onclick="submitComment()">Post comment</button>
+        <span class="form-note" id="comment-status"></span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ---- Configure your Supabase project here ----
+const SUPABASE_URL = 'https://klzhiyulvccgxmtqmsel.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtsemhpeXVsdmNjZ3htdHFtc2VsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3NDcyMjAsImV4cCI6MjEwMzMyMzIyMH0.U2SBI-1pTEH-rr0htaZ9jX36hWENtvC5UPwL8Kcy_OQ';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let posts = [];
+let currentPost = null;
+
+async function loadPosts(){
+  document.getElementById('loading').style.display = 'block';
+  const { data, error } = await supabase
+    .from('posts')
+    .select('*')
+    .eq('status', 'published')
+    .order('created_at', { ascending: false });
+  document.getElementById('loading').style.display = 'none';
+  if(error){ console.error(error); posts = []; }
+  else { posts = data || []; }
+  renderLibrary();
+}
+
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function fmtDate(ts){
+  return new Date(ts).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}).toUpperCase();
+}
+
+function renderLibrary(){
+  const q = (document.getElementById('search').value || '').toLowerCase();
+  const filtered = posts.filter(p => !q || (p.title||'').toLowerCase().includes(q) || (p.body||'').toLowerCase().includes(q) || (p.tags||'').toLowerCase().includes(q));
+  const el = document.getElementById('library-list');
+  if(filtered.length === 0){
+    el.innerHTML = `<div class="empty"><h3>${posts.length===0 ? 'No entries yet' : 'Nothing matches'}</h3><p>${posts.length===0 ? 'Check back soon.' : 'Try a different search.'}</p></div>`;
+    return;
+  }
+  el.innerHTML = filtered.map(p=>{
+    const excerpt = escapeHtml((p.body||'').slice(0,180)).trim() + ((p.body||'').length>180 ? '…' : '');
+    const tags = (p.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
+    return `<div class="card" onclick="openPost('${p.id}')">
+      <div class="card-date">${fmtDate(p.created_at)}</div>
+      <h3>${escapeHtml(p.title) || 'Untitled entry'}</h3>
+      <p>${excerpt}</p>
+      <div>${tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join('')}</div>
+    </div>`;
+  }).join('');
+}
+
+function inlineMd(s){
+  s = escapeHtml(s);
+  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  return s;
+}
+function renderMarkdown(raw){
+  const lines = (raw||'').split('\n');
+  let html = ''; let inList = false;
+  for(let line of lines){
+    let l = line.trim();
+    if(l.startsWith('## ')){ if(inList){html+='</ul>';inList=false;} html += `<h2>${inlineMd(l.slice(3))}</h2>`; }
+    else if(l.startsWith('# ')){ if(inList){html+='</ul>';inList=false;} html += `<h1>${inlineMd(l.slice(2))}</h1>`; }
+    else if(l.startsWith('> ')){ if(inList){html+='</ul>';inList=false;} html += `<blockquote>${inlineMd(l.slice(2))}</blockquote>`; }
+    else if(l.startsWith('- ')){ if(!inList){html+='<ul>';inList=true;} html += `<li>${inlineMd(l.slice(2))}</li>`; }
+    else if(l === ''){ if(inList){html+='</ul>';inList=false;} }
+    else { if(inList){html+='</ul>';inList=false;} html += `<p>${inlineMd(l)}</p>`; }
+  }
+  if(inList) html += '</ul>';
+  return html;
+}
+
+async function openPost(id){
+  currentPost = posts.find(p=>p.id===id);
+  if(!currentPost) return;
+  document.getElementById('post-date').textContent = fmtDate(currentPost.created_at);
+  document.getElementById('post-title').textContent = currentPost.title || 'Untitled entry';
+  const tags = (currentPost.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
+  document.getElementById('post-tags').innerHTML = tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join('');
+  document.getElementById('post-body').innerHTML = renderMarkdown(currentPost.body);
+  document.getElementById('comment-status').textContent = '';
+  document.getElementById('comment-name').value = '';
+  document.getElementById('comment-body').value = '';
+  document.getElementById('view-library').style.display = 'none';
+  document.getElementById('view-post').style.display = 'block';
+  window.scrollTo(0,0);
+  await loadComments();
+}
+
+function backToLibrary(){
+  document.getElementById('view-post').style.display = 'none';
+  document.getElementById('view-library').style.display = 'block';
+  currentPost = null;
+}
+
+async function loadComments(){
+  const listEl = document.getElementById('comments-list');
+  listEl.innerHTML = '<div class="form-note">loading comments…</div>';
+  const { data, error } = await supabase
+    .from('comments')
+    .select('*')
+    .eq('post_id', currentPost.id)
+    .order('created_at', { ascending: true });
+  if(error){ console.error(error); listEl.innerHTML = '<div class="form-note">could not load comments</div>'; return; }
+  document.getElementById('comment-count').textContent = `Comments (${data.length})`;
+  if(data.length === 0){
+    listEl.innerHTML = '<div class="form-note">No comments yet — be the first.</div>';
+    return;
+  }
+  listEl.innerHTML = data.map(c => `
+    <div class="comment">
+      <span class="comment-name">${escapeHtml(c.name || 'Anonymous')}</span>
+      <span class="comment-date">${fmtDate(c.created_at)}</span>
+      <div class="comment-body">${escapeHtml(c.body)}</div>
+    </div>`).join('');
+}
+
+async function submitComment(){
+  const name = document.getElementById('comment-name').value.trim() || 'Anonymous';
+  const body = document.getElementById('comment-body').value.trim();
+  const statusEl = document.getElementById('comment-status');
+  if(!body){ statusEl.textContent = 'write something first'; return; }
+  const btn = document.getElementById('comment-submit');
+  btn.disabled = true;
+  statusEl.textContent = 'posting…';
+  const { error } = await supabase.from('comments').insert({ post_id: currentPost.id, name, body });
+  btn.disabled = false;
+  if(error){ console.error(error); statusEl.textContent = 'could not post — try again'; return; }
+  document.getElementById('comment-body').value = '';
+  statusEl.textContent = '';
+  await loadComments();
+}
+
+loadPosts();
+</script>
+</body>
+</html>
