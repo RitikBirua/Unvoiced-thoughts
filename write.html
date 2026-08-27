@@ -231,7 +231,7 @@ function showLibrary(){
 
 async function loadPosts(){
   document.getElementById('loading').style.display = 'block';
-  const { data, error } = await supabase
+  const { data, error } = await sb
     .from('posts')
     .select('*')
     .eq('author_id', currentUser.id)

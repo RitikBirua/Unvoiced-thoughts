@@ -129,7 +129,7 @@ let currentPost = null;
 
 async function loadPosts(){
   document.getElementById('loading').style.display = 'block';
-  const { data, error } = await supabase
+  const { data, error } = await sb
     .from('posts')
     .select('*')
     .eq('status', 'published')
@@ -215,7 +215,7 @@ function backToLibrary(){
 async function loadComments(){
   const listEl = document.getElementById('comments-list');
   listEl.innerHTML = '<div class="form-note">loading comments…</div>';
-  const { data, error } = await supabase
+  const { data, error } = await sb
     .from('comments')
     .select('*')
     .eq('post_id', currentPost.id)
