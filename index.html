@@ -203,7 +203,15 @@ async function openPost(id){
   document.getElementById('view-library').style.display = 'none';
   document.getElementById('view-post').style.display = 'block';
   window.scrollTo(0,0);
+  logPageview(id);
   await loadComments();
+}
+
+function logPageview(postId){
+  // Fire-and-forget: never blocks the reader, errors are silently ignored
+  sb.from('pageviews').insert({ post_id: postId }).then(({error}) => {
+    if(error) console.error('pageview log failed', error);
+  });
 }
 
 function backToLibrary(){
